@@ -7,38 +7,12 @@ import { toast } from "sonner";
 
 interface FoodAnalysisResultProps {
   image: string;
+  analysis: any;
   onClose: () => void;
   onRetake: () => void;
 }
 
-const FoodAnalysisResult = ({ image, onClose, onRetake }: FoodAnalysisResultProps) => {
-  // Mock analysis data - replace with real AI analysis
-  const analysis = {
-    name: "Grilled Chicken Salad",
-    calories: 385,
-    servingSize: "1 bowl (350g)",
-    macros: {
-      protein: { amount: 42, percentage: 88 },
-      carbs: { amount: 28, percentage: 46 },
-      fats: { amount: 12, percentage: 42 },
-    },
-    nutrients: [
-      { name: "Fiber", amount: "8g", daily: 32 },
-      { name: "Sugar", amount: "6g", daily: 12 },
-      { name: "Sodium", amount: "420mg", daily: 18 },
-      { name: "Vitamin C", amount: "45mg", daily: 75 },
-      { name: "Iron", amount: "3.2mg", daily: 18 },
-      { name: "Calcium", amount: "120mg", daily: 12 },
-    ],
-    ingredients: [
-      "Grilled chicken breast",
-      "Mixed greens",
-      "Cherry tomatoes",
-      "Cucumber",
-      "Olive oil dressing",
-    ],
-    healthScore: 92,
-  };
+const FoodAnalysisResult = ({ image, analysis, onClose, onRetake }: FoodAnalysisResultProps) => {
 
   const handleSave = () => {
     toast.success("Meal saved to your diary!");
