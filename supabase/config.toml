@@ -2,3 +2,9 @@ project_id = "gqmbtbesjmxidyiqohvd"
 
 [functions.analyze-food]
 verify_jwt = false
+
+[functions.chat-advisor]
+verify_jwt = true
+
+[functions.generate-recipes]
+verify_jwt = false

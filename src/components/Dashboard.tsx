@@ -1,21 +1,43 @@
+import { useEffect, useState } from "react";
 import { Flame, Droplets, Zap, Apple } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import MacroChart from "@/components/MacroChart";
 import RecentMeals from "@/components/RecentMeals";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
-  // Mock data - replace with real data later
-  const dailyGoal = 2000;
-  const consumed = 1340;
+  const [dailyGoal, setDailyGoal] = useState(2000);
+  const [consumed, setConsumed] = useState(0);
+  const [macros, setMacros] = useState({
+    protein: { current: 0, goal: 150 },
+    carbs: { current: 0, goal: 250 },
+    fats: { current: 0, goal: 65 },
+  });
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const today = new Date().toISOString().split('T')[0];
+      const { data: meals } = await supabase.from('meals').select('*').eq('user_id', user.id).gte('created_at', `${today}T00:00:00`);
+      
+      if (meals?.length) {
+        const cal = meals.reduce((s, m) => s + m.calories, 0);
+        setConsumed(cal);
+        setMacros({
+          protein: { current: Math.round(meals.reduce((s, m) => s + (m.protein || 0), 0)), goal: 150 },
+          carbs: { current: Math.round(meals.reduce((s, m) => s + (m.carbs || 0), 0)), goal: 250 },
+          fats: { current: Math.round(meals.reduce((s, m) => s + (m.fat || 0), 0)), goal: 65 },
+        });
+      }
+    };
+    fetchData();
+  }, []);
+
   const remaining = dailyGoal - consumed;
   const progressPercentage = (consumed / dailyGoal) * 100;
-
-  const macros = {
-    protein: { current: 65, goal: 150 },
-    carbs: { current: 180, goal: 250 },
-    fats: { current: 45, goal: 65 },
-  };
 
   return (
     <div className="px-4 py-6 space-y-6">

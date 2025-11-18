@@ -4,49 +4,27 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Recipe {
+  name: string;
+  description: string;
+  time: number;
+  servings: number;
+  difficulty: string;
+  calories: number;
+  sustainability: number;
+  ingredients: string[];
+  instructions: string[];
+}
 
 const LeftoverRecipes = () => {
   const [leftoverImage, setLeftoverImage] = useState<string | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [showRecipes, setShowRecipes] = useState(false);
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [ingredients, setIngredients] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // Mock recipe data - replace with real AI suggestions
-  const recipes = [
-    {
-      id: 1,
-      name: "Veggie Fried Rice",
-      description: "Transform leftover rice and vegetables into a delicious Asian-inspired meal",
-      time: "15 min",
-      servings: 2,
-      difficulty: "Easy",
-      calories: 340,
-      sustainability: 95,
-      image: "🍚",
-    },
-    {
-      id: 2,
-      name: "Mixed Vegetable Soup",
-      description: "A hearty soup that uses all your leftover vegetables",
-      time: "25 min",
-      servings: 4,
-      difficulty: "Easy",
-      calories: 180,
-      sustainability: 92,
-      image: "🥣",
-    },
-    {
-      id: 3,
-      name: "Vegetable Frittata",
-      description: "A protein-packed breakfast using leftover veggies",
-      time: "20 min",
-      servings: 3,
-      difficulty: "Medium",
-      calories: 280,
-      sustainability: 88,
-      image: "🍳",
-    },
-  ];
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,15 +38,31 @@ const LeftoverRecipes = () => {
     }
   };
 
-  const handleAnalyzeLeftovers = () => {
+  const handleAnalyzeLeftovers = async () => {
+    if (!leftoverImage) return;
+
     setIsAnalyzing(true);
     toast.info("Analyzing your leftovers...");
     
-    setTimeout(() => {
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-recipes", {
+        body: { imageBase64: leftoverImage },
+      });
+
+      if (error) throw error;
+      if (data.error) throw new Error(data.error);
+
+      console.log('Recipes generated:', data);
+      setRecipes(data.recipes || []);
+      setIngredients(data.ingredients || []);
       setIsAnalyzing(false);
       setShowRecipes(true);
       toast.success("Found sustainable recipes for you!");
-    }, 2000);
+    } catch (error: any) {
+      console.error('Recipe generation error:', error);
+      setIsAnalyzing(false);
+      toast.error(error.message || "Failed to generate recipes. Please try again.");
+    }
   };
 
   const handleTryAgain = () => {
@@ -178,13 +172,12 @@ const LeftoverRecipes = () => {
               Recipe Suggestions
             </h3>
             
-            {recipes.map((recipe) => (
+            {recipes.map((recipe, index) => (
               <Card
-                key={recipe.id}
+                key={index}
                 className="p-5 border-0 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
               >
                 <div className="flex gap-4">
-                  <div className="text-5xl">{recipe.image}</div>
                   
                   <div className="flex-1 space-y-3">
                     <div>
