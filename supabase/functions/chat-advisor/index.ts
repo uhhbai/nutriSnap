@@ -18,38 +18,28 @@ serve(async (req) => {
     console.log('Received request with message:', message);
     console.log('User profile:', userProfile);
     
+    // Get the authorization header (JWT token)
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
-      console.error('No authorization header');
-      throw new Error('Unauthorized - No authorization header');
+      console.error('No authorization header found');
+      throw new Error('Unauthorized - Missing authentication');
     }
 
-    console.log('Auth header present');
-    
-    // Create Supabase client with auth header for user operations
-    const supabaseClient = createClient(
+    console.log('Authorization header present');
+
+    // Create Supabase client with service role to bypass RLS
+    const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { 
-        global: { 
-          headers: { 
-            Authorization: authHeader 
-          } 
-        } 
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Verify user authentication
-    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    // Extract JWT token and get user
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
     
-    if (userError) {
-      console.error('Error getting user:', userError);
-      throw new Error('Authentication failed: ' + userError.message);
-    }
-    
-    if (!user) {
-      console.error('No user found in token');
-      throw new Error('Unauthorized - No user found');
+    if (userError || !user) {
+      console.error('Error verifying user:', userError);
+      throw new Error('Unauthorized - Invalid token');
     }
 
     console.log('User authenticated:', user.id);
