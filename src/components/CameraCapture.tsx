@@ -115,31 +115,6 @@ const CameraCapture = ({ onClose }: CameraCaptureProps) => {
 
       console.log("Analysis result:", data);
       setAnalysisData(data.analysis);
-      
-      // Save meal to database
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { error: insertError } = await supabase
-          .from('meals')
-          .insert({
-            user_id: user.id,
-            name: data.analysis.name,
-            calories: data.analysis.calories,
-            protein: data.analysis.macros.protein,
-            carbs: data.analysis.macros.carbs,
-            fat: data.analysis.macros.fat,
-            fiber: data.analysis.nutrients.fiber,
-            serving_size: data.analysis.servingSize,
-            image_url: capturedImage,
-          });
-
-        if (insertError) {
-          console.error('Error saving meal:', insertError);
-        } else {
-          console.log('Meal saved to database');
-        }
-      }
-
       setShowResults(true);
       toast.success("Analysis complete!");
     } catch (error: any) {
