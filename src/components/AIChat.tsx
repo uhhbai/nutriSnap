@@ -23,30 +23,61 @@ interface UserProfile {
 }
 
 const AIChat = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: "1",
-      role: "assistant",
-      content: "Hi! I'm your AI nutrition and fitness advisor. Ask me anything about diet, workouts, or healthy living!",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [needsProfile, setNeedsProfile] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     // Fetch user profile
     const fetchProfile = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-        if (data) setUserProfile(data);
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          
+          if (error) {
+            console.error('Error fetching profile:', error);
+          }
+          
+          if (data) {
+            setUserProfile(data);
+            // Check if essential profile data exists
+            if (!data.height || !data.weight) {
+              setNeedsProfile(true);
+              setMessages([{
+                id: "1",
+                role: "assistant",
+                content: "Hi! Before I can provide personalized advice, I need you to complete your profile. Please go to the Profile tab and enter your height and weight. Once done, come back here and I'll be ready to help! 😊",
+              }]);
+            } else {
+              setMessages([{
+                id: "1",
+                role: "assistant",
+                content: "Hi! I'm your AI nutrition and fitness advisor. Ask me anything about diet, workouts, or healthy living!",
+              }]);
+            }
+          } else {
+            setNeedsProfile(true);
+            setMessages([{
+              id: "1",
+              role: "assistant",
+              content: "Hi! Before I can provide personalized advice, I need you to complete your profile. Please go to the Profile tab and enter your height and weight. Once done, come back here and I'll be ready to help! 😊",
+            }]);
+          }
+        }
+      } catch (error) {
+        console.error('Error in fetchProfile:', error);
+      } finally {
+        setProfileLoading(false);
       }
     };
     fetchProfile();
@@ -62,6 +93,16 @@ const AIChat = () => {
   const handleSend = async () => {
     if (!input.trim() || loading) return;
 
+    // Check if profile is complete before allowing chat
+    if (needsProfile || !userProfile?.height || !userProfile?.weight) {
+      toast({
+        title: "Profile Incomplete",
+        description: "Please complete your profile (height & weight) in the Profile tab before chatting.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
@@ -73,6 +114,12 @@ const AIChat = () => {
     setLoading(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error('Not authenticated');
+      }
+
       const { data, error } = await supabase.functions.invoke('chat-advisor', {
         body: { 
           message: input,
@@ -80,7 +127,14 @@ const AIChat = () => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase function error:', error);
+        throw error;
+      }
+
+      if (!data || !data.response) {
+        throw new Error('Invalid response from AI');
+      }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -93,13 +147,21 @@ const AIChat = () => {
       console.error('Chat error:', error);
       toast({
         title: "Error",
-        description: "Failed to get response. Please try again.",
+        description: error.message || "Failed to get response. Please try again.",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
+
+  if (profileLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -152,10 +214,10 @@ const AIChat = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyPress={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Ask me anything about nutrition or fitness..."
-            disabled={loading}
+            placeholder={needsProfile ? "Complete your profile first..." : "Ask me anything about nutrition or fitness..."}
+            disabled={loading || needsProfile}
           />
-          <Button onClick={handleSend} disabled={loading || !input.trim()}>
+          <Button onClick={handleSend} disabled={loading || !input.trim() || needsProfile}>
             <Send className="w-4 h-4" />
           </Button>
         </div>

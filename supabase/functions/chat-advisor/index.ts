@@ -15,6 +15,9 @@ serve(async (req) => {
   try {
     const { message, userProfile } = await req.json();
     
+    console.log('Received request with message:', message);
+    console.log('User profile:', userProfile);
+    
     const authHeader = req.headers.get('Authorization')!;
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
@@ -24,11 +27,15 @@ serve(async (req) => {
 
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
+      console.error('Unauthorized: No user found');
       throw new Error('Unauthorized');
     }
 
+    console.log('User authenticated:', user.id);
+
     const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
     if (!lovableApiKey) {
+      console.error('LOVABLE_API_KEY not configured');
       throw new Error('LOVABLE_API_KEY not configured');
     }
 
@@ -67,10 +74,16 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Lovable AI error:', response.status, errorText);
-      throw new Error(`AI service error: ${response.status}`);
+      throw new Error(`AI service error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
+    
+    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+      console.error('Invalid AI response structure:', data);
+      throw new Error('Invalid response from AI service');
+    }
+    
     const aiResponse = data.choices[0].message.content;
 
     console.log('AI response generated successfully');

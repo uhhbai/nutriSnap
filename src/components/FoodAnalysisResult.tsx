@@ -4,6 +4,8 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 
 interface FoodAnalysisResultProps {
   image: string;
@@ -13,10 +15,65 @@ interface FoodAnalysisResultProps {
 }
 
 const FoodAnalysisResult = ({ image, analysis, onClose, onRetake }: FoodAnalysisResultProps) => {
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
-  const handleSave = () => {
-    toast.success("Meal saved to your diary!");
-    setTimeout(() => onClose(), 500);
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        toast.error("Please log in to save meals");
+        setSaving(false);
+        return;
+      }
+
+      // Extract macro amounts - handle both possible data structures
+      const proteinAmount = analysis.macros.protein?.amount || analysis.macros.protein || 0;
+      const carbsAmount = analysis.macros.carbs?.amount || analysis.macros.carbs || 0;
+      const fatsAmount = analysis.macros.fats?.amount || analysis.macros.fat || 0;
+      
+      // Extract fiber from nutrients array or object
+      let fiberAmount = 0;
+      if (Array.isArray(analysis.nutrients)) {
+        const fiberNutrient = analysis.nutrients.find((n: any) => 
+          n.name.toLowerCase().includes('fiber')
+        );
+        fiberAmount = fiberNutrient?.amount || 0;
+      } else if (analysis.nutrients?.fiber) {
+        fiberAmount = analysis.nutrients.fiber;
+      }
+
+      const { error: insertError } = await supabase
+        .from('meals')
+        .insert({
+          user_id: user.id,
+          name: analysis.name,
+          calories: analysis.calories,
+          protein: proteinAmount,
+          carbs: carbsAmount,
+          fat: fatsAmount,
+          fiber: fiberAmount,
+          serving_size: analysis.servingSize,
+          image_url: image,
+        });
+
+      if (insertError) {
+        console.error('Error saving meal:', insertError);
+        toast.error("Failed to save meal: " + insertError.message);
+      } else {
+        console.log('Meal saved to database successfully');
+        setSaved(true);
+        toast.success("Meal saved to your diary!");
+        setTimeout(() => onClose(), 1500);
+      }
+    } catch (error: any) {
+      console.error('Error in handleSave:', error);
+      toast.error("An error occurred: " + (error.message || "Please try again"));
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -125,9 +182,10 @@ const FoodAnalysisResult = ({ image, analysis, onClose, onRetake }: FoodAnalysis
             onClick={handleSave}
             className="w-full bg-gradient-to-r from-primary to-success text-primary-foreground shadow-lg shadow-primary/30"
             size="lg"
+            disabled={saving || saved}
           >
             <Save className="w-5 h-5 mr-2" />
-            Save to Diary
+            {saving ? "Saving..." : saved ? "Saved!" : "Save to Diary"}
           </Button>
           
           <Button

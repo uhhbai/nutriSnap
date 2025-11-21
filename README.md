@@ -1,73 +1,188 @@
-# Welcome to your Lovable project
+# NutriSnap - AI-Powered Nutrition Tracker
 
-## Project info
+NutriSnap is a mobile-first nutrition tracking app that uses AI to analyze food from photos. Simply snap a picture of your meal, and get instant nutritional information including calories, macros, and personalized health recommendations.
 
-**URL**: https://lovable.dev/projects/c38cfb32-6923-4fc8-83b9-c3cc3ab2d749
+## Features
 
-## How can I edit this code?
+- 📸 **Camera-First Food Tracking**: Take photos of your meals for instant AI analysis
+- 🤖 **AI-Powered Analysis**: Get detailed nutritional breakdown including calories, protein, carbs, fats, and fiber
+- 📊 **Real-Time Dashboard**: Track your daily calorie intake and macro distribution
+- 📝 **Meal History**: View all your logged meals with timestamps and images
+- 🥗 **Leftover Recipe Suggestions**: Get sustainable recipe ideas based on leftover ingredients
+- 💬 **AI Health Advisor**: Personalized diet and workout recommendations based on your profile
+- 👤 **User Profiles**: Set your goals, track progress, and customize your experience
 
-There are several ways of editing your application.
+## Technologies Used
 
-**Use Lovable**
+- **Frontend**: React + TypeScript + Vite
+- **UI Framework**: Tailwind CSS + shadcn-ui components
+- **Backend**: Supabase (Database, Authentication, Edge Functions)
+- **AI**: Google Gemini 2.5 Flash (vision + text generation)
+- **Camera**: Native MediaDevices API
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c38cfb32-6923-4fc8-83b9-c3cc3ab2d749) and start prompting.
+## Prerequisites
 
-Changes made via Lovable will be committed automatically to this repo.
+Before running this project, ensure you have the following installed:
 
-**Use your preferred IDE**
+- **Node.js** (v18 or higher) - [Download here](https://nodejs.org/)
+- **npm** (comes with Node.js) or **bun**
+- **Git** - [Download here](https://git-scm.com/)
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Setup Instructions
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 1. Clone the Repository
 
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
+```bash
 git clone <YOUR_GIT_URL>
+cd nutrisnap
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 2. Install Dependencies
 
-# Step 3: Install the necessary dependencies.
-npm i
+Using npm:
+```bash
+npm install
+```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+Or using bun:
+```bash
+bun install
+```
+
+### 3. Environment Variables
+
+The project uses Supabase for backend services. The `.env` file should contain:
+
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
+VITE_SUPABASE_PROJECT_ID=your_project_id
+```
+
+**Note**: These are automatically configured if you're using Lovable Cloud.
+
+### 4. Start Development Server
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+The app will be available at `http://localhost:8080`
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### 5. Build for Production
 
-**Use GitHub Codespaces**
+```bash
+npm run build
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+The production-ready files will be in the `dist/` folder.
 
-## What technologies are used for this project?
+## Usage Guide
 
-This project is built with:
+### First Time Setup
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+1. **Sign Up**: Create an account using email and password
+2. **Complete Profile**: Enter your height, weight, age, gender, and activity level
+3. **Set Goals**: Define your daily calorie goal and target weight
 
-## How can I deploy this project?
+### Logging Meals
 
-Simply open [Lovable](https://lovable.dev/projects/c38cfb32-6923-4fc8-83b9-c3cc3ab2d749) and click on Share -> Publish.
+1. Tap the **Camera** icon in the navigation
+2. Position food in the frame and tap capture (or upload an existing photo)
+3. Tap **Analyze Food** to get AI-powered nutritional analysis
+4. Review the results and tap **Save to Diary**
+5. Your dashboard will update automatically with the calories and macros
 
-## Can I connect a custom domain to my Lovable project?
+### Using AI Chat
 
-Yes, you can!
+1. Complete your profile first (height, weight required)
+2. Navigate to **AI Chat** tab
+3. Ask questions about nutrition, workouts, or healthy living
+4. Get personalized advice based on your profile data
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+### Leftover Recipes
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+1. Navigate to **Recipes** tab
+2. Enter leftover ingredients (e.g., "chicken, broccoli, rice")
+3. Tap **Generate Recipes** to get AI-suggested sustainable meal ideas
+
+## Project Structure
+
+```
+nutrisnap/
+├── src/
+│   ├── components/          # React components
+│   │   ├── Dashboard.tsx    # Main calorie tracking dashboard
+│   │   ├── CameraCapture.tsx # Camera interface for food photos
+│   │   ├── AIChat.tsx       # AI chatbot component
+│   │   ├── Profile.tsx      # User profile management
+│   │   └── ui/              # Reusable UI components (shadcn)
+│   ├── pages/               # Route pages
+│   │   ├── Index.tsx        # Main app with navigation
+│   │   └── Auth.tsx         # Login/signup page
+│   ├── integrations/
+│   │   └── supabase/        # Supabase client & types
+│   └── main.tsx             # App entry point
+├── supabase/
+│   ├── functions/           # Edge functions
+│   │   ├── analyze-food/    # AI food image analysis
+│   │   ├── chat-advisor/    # AI health chatbot
+│   │   └── generate-recipes/ # AI recipe generator
+│   └── migrations/          # Database migrations
+└── public/
+    └── data/                # Nutritional reference datasets
+
+```
+
+## Database Schema
+
+- **profiles**: User profile information (height, weight, goals)
+- **meals**: Logged meals with nutritional data and images
+- **user_goals**: User fitness and weight goals
+
+## Troubleshooting
+
+### Camera Not Working
+- Ensure you've granted camera permissions in your browser
+- Use HTTPS or localhost (camera requires secure context)
+
+### AI Analysis Failing
+- Check your internet connection
+- Ensure the Supabase edge functions are deployed
+- Check browser console for detailed error messages
+
+### Meals Not Saving
+- Ensure you're logged in
+- Complete your user profile first
+- Check browser console for RLS policy errors
+
+## Deployment
+
+This project is deployed using Lovable's hosting platform:
+
+```bash
+# Deploy via Lovable
+1. Open your Lovable project
+2. Click Share -> Publish
+3. Click "Update" to deploy changes
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License.
+
+## Support
+
+For issues and questions, please open an issue on GitHub or contact the development team.
+
+---
+
+Built with ❤️ using React, TypeScript, Supabase, and AI
