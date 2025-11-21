@@ -18,17 +18,38 @@ serve(async (req) => {
     console.log('Received request with message:', message);
     console.log('User profile:', userProfile);
     
-    const authHeader = req.headers.get('Authorization')!;
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('No authorization header');
+      throw new Error('Unauthorized - No authorization header');
+    }
+
+    console.log('Auth header present');
+    
+    // Create Supabase client with auth header for user operations
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      { 
+        global: { 
+          headers: { 
+            Authorization: authHeader 
+          } 
+        } 
+      }
     );
 
-    const { data: { user } } = await supabaseClient.auth.getUser();
+    // Verify user authentication
+    const { data: { user }, error: userError } = await supabaseClient.auth.getUser();
+    
+    if (userError) {
+      console.error('Error getting user:', userError);
+      throw new Error('Authentication failed: ' + userError.message);
+    }
+    
     if (!user) {
-      console.error('Unauthorized: No user found');
-      throw new Error('Unauthorized');
+      console.error('No user found in token');
+      throw new Error('Unauthorized - No user found');
     }
 
     console.log('User authenticated:', user.id);
