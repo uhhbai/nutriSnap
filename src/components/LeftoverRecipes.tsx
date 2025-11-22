@@ -31,22 +31,23 @@ const LeftoverRecipes = () => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setLeftoverImage(reader.result as string);
-        handleAnalyzeLeftovers();
+        const imageData = reader.result as string;
+        setLeftoverImage(imageData);
+        handleAnalyzeLeftovers(imageData);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleAnalyzeLeftovers = async () => {
-    if (!leftoverImage) return;
+  const handleAnalyzeLeftovers = async (imageData: string) => {
+    if (!imageData) return;
 
     setIsAnalyzing(true);
     toast.info("Analyzing your leftovers...");
     
     try {
       const { data, error } = await supabase.functions.invoke("generate-recipes", {
-        body: { imageBase64: leftoverImage },
+        body: { imageBase64: imageData },
       });
 
       if (error) throw error;

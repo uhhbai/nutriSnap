@@ -59,7 +59,8 @@ serve(async (req) => {
       if (userProfile.age) context += `Age: ${userProfile.age}, `;
       if (userProfile.gender) context += `Gender: ${userProfile.gender}, `;
       if (userProfile.activity_level) context += `Activity level: ${userProfile.activity_level}, `;
-      if (userProfile.daily_calorie_goal) context += `Daily calorie goal: ${userProfile.daily_calorie_goal} kcal`;
+      if (userProfile.daily_calorie_goal) context += `Daily calorie goal: ${userProfile.daily_calorie_goal} kcal, `;
+      if (userProfile.weekly_workout_days) context += `Weekly workout days: ${userProfile.weekly_workout_days} days/week`;
     }
 
     console.log('Sending request to Lovable AI with context:', context);
