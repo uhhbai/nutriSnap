@@ -20,6 +20,7 @@ interface UserProfile {
   gender?: string;
   activity_level?: string;
   daily_calorie_goal?: number;
+  weekly_workout_days?: number;
 }
 
 const AIChat = () => {
@@ -33,25 +34,39 @@ const AIChat = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Fetch user profile
+    // Fetch user profile and goals
     const fetchProfile = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (user) {
-          const { data, error } = await supabase
+          // Fetch profile
+          const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('*')
             .eq('id', user.id)
             .single();
           
-          if (error) {
-            console.error('Error fetching profile:', error);
+          if (profileError) {
+            console.error('Error fetching profile:', profileError);
           }
+
+          // Fetch goals
+          const { data: goalData } = await supabase
+            .from('user_goals')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle();
           
-          if (data) {
-            setUserProfile(data);
+          if (profileData) {
+            // Combine profile and goal data
+            const combinedProfile = {
+              ...profileData,
+              weekly_workout_days: goalData?.weekly_workout_days
+            };
+            setUserProfile(combinedProfile);
+            
             // Check if essential profile data exists
-            if (!data.height || !data.weight) {
+            if (!profileData.height || !profileData.weight) {
               setNeedsProfile(true);
               setMessages([{
                 id: "1",
