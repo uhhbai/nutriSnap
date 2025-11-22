@@ -113,7 +113,6 @@ const CameraCapture = ({ onClose }: CameraCaptureProps) => {
         throw new Error(data.error);
       }
 
-      console.log("Analysis result:", data);
       setAnalysisData(data.analysis);
       setShowResults(true);
       toast.success("Analysis complete!");

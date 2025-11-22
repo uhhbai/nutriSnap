@@ -53,7 +53,6 @@ const LeftoverRecipes = () => {
       if (error) throw error;
       if (data.error) throw new Error(data.error);
 
-      console.log('Recipes generated:', data);
       setRecipes(data.recipes || []);
       setIngredients(data.ingredients || []);
       setIsAnalyzing(false);
