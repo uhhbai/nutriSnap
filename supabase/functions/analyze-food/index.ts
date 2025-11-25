@@ -121,6 +121,20 @@ Be accurate with portion estimates. Use standard serving sizes. Calculate percen
       }
     } catch (parseError) {
       console.error("Failed to parse AI response:", content);
+      
+      // Check if the AI couldn't detect food
+      if (content.toLowerCase().includes("cannot") || 
+          content.toLowerCase().includes("no food") ||
+          content.toLowerCase().includes("not contain")) {
+        return new Response(
+          JSON.stringify({ error: "No food detected in the image. Please take a photo of your meal." }),
+          {
+            status: 400,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+      
       throw new Error("Failed to parse nutrition data from AI");
     }
 
